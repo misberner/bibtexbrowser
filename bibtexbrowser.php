@@ -1630,7 +1630,7 @@ class BibEntry {
     $entry = htmlspecialchars($this->getFullText());
 
     // Fields that should be hyperlinks
-    $hyperlinks = hyperlinkFields();
+    $hyperlinks = $this->hyperlinkFields();
 
     foreach ($hyperlinks as $field => $url) {
       if ($this->hasField($field)) {
