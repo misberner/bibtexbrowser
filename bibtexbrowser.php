@@ -180,6 +180,8 @@ function bibtexbrowser_configure($key, $value) {
 // for instance with @define('BIBTEXBROWSER_URL',''); // links to the current page with ?
 @define('BIBTEXBROWSER_URL',basename(__FILE__));
 
+@define('BIBTEXBROWSER_CACHE_DIR', '.');
+
 // *************** END CONFIGURATION
 
 define('Q_INNER_AUTHOR', '_author');// internally used for representing the author
@@ -299,7 +301,7 @@ function _zetDB($bibtex_filenames) {
   // ---------------------------- HANDLING caching of compiled bibtex files
   // for sake of performance, once the bibtex file is parsed
   // we try to save a "compiled" in a txt file
-  $compiledbib = 'bibtexbrowser_'.md5($bibtex_filenames).'.dat';
+  $compiledbib = BIBTEXBROWSER_CACHE_DIR.'/bibtexbrowser_'.md5($bibtex_filenames).'.dat';
 
   $parse=filemtime(__FILE__)>@filemtime($compiledbib);
 
