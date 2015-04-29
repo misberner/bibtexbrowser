@@ -1632,15 +1632,49 @@ class BibEntry {
     // Fields that should be hyperlinks
     $hyperlinks = $this->hyperlinkFields();
 
-    foreach ($hyperlinks as $field => $url) {
-      if ($this->hasField($field)) {
-        $href = str_replace('%O', $this->getField($field), $url);
-        $href = str_replace('\\textunderscore', '_', $href);
-        $href = str_replace('\\_', '_', $href);
-        // this is not a parsing but a simple replacement
-        $entry = str_replace($this->getField($field), '<a'.(BIBTEXBROWSER_LINKS_IN_NEW_WINDOW?' target="_blank" ':'').' href="'.$href.'">'.$this->getField($field).'</a>', $entry);
+    $entryLines = explode("\n", $entry);
+    $modified = false;
+    foreach ($entryLines as &$line) {
+      $eqSign = strpos($line, '=');
+      if (!$eqSign) {
+        continue;
       }
+      $fieldName = trim(substr($line, 0, $eqSign));
+      if (!isset($hyperlinks[$fieldName])) {
+        continue;
+      }
+      $replacement = $hyperlinks[$fieldName];
+      
+      if (!$this->hasField($fieldName)) {
+        continue;
+      }
+      $value = $this->getField($fieldName);
+
+      $href = str_replace('%O', $value, $replacement);
+      $line = preg_replace_callback(
+        '/^([^\=]*\=\s\{)([^\}]*)(\}.*)$/',
+        function ($match) use ($href) {
+          return $match[1]
+            .'<a '.(BIBTEXBROWSER_LINKS_IN_NEW_WINDOW?'target="_blank" ':'').'href="'
+            .$href.'">'.$match[2].'</a>'.$match[3];
+        },
+        $line);
+      $modified = true;
     }
+
+    if ($modified) {
+      $entry = join("\n", $entryLines);
+    }
+      
+    // foreach ($hyperlinks as $field => $url) {
+    //   if ($this->hasField($field)) {
+    //     $href = str_replace('%O', $this->getField($field), $url);
+    //     $href = str_replace('\\textunderscore', '_', $href);
+    //     $href = str_replace('\\_', '_', $href);
+    //     // this is not a parsing but a simple replacement
+    //     $entry = str_replace($this->getField($field), '<a'.(BIBTEXBROWSER_LINKS_IN_NEW_WINDOW?' target="_blank" ':'').' href="'.$href.'">'.$this->getField($field).'</a>', $entry);
+    //   }
+    // }
 
     $result .=  $entry;
     $result .=  '</pre>';
