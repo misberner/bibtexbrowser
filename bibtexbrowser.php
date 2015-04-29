@@ -1634,7 +1634,7 @@ class BibEntry {
 
     foreach ($hyperlinks as $field => $url) {
       if ($this->hasField($field)) {
-        $href = str_replace('%O', $this->getField($field), $url);
+        $href = preg_replace('/\\(?:textunderscore|_)/', '_', str_replace('%O', $this->getField($field), $url));
         // this is not a parsing but a simple replacement
         $entry = str_replace($this->getField($field), '<a'.(BIBTEXBROWSER_LINKS_IN_NEW_WINDOW?' target="_blank" ':'').' href="'.$href.'">'.$this->getField($field).'</a>', $entry);
       }
