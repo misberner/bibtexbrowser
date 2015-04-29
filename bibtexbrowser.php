@@ -1630,7 +1630,7 @@ class BibEntry {
     $entry = htmlspecialchars($this->getFullText());
 
     // Fields that should be hyperlinks
-    $hyperlinks = array('url' => '%O', 'file' => '%O', 'pdf' => '%O', 'doi' => 'http://dx.doi.org/%O', 'gsid' => 'http://scholar.google.com/scholar?cites=%O');
+    $hyperlinks = hyperlinkFields();
 
     foreach ($hyperlinks as $field => $url) {
       if ($this->hasField($field)) {
@@ -1643,6 +1643,11 @@ class BibEntry {
     $result .=  $entry;
     $result .=  '</pre>';
     return $result;
+   }
+
+   function hyperlinkFields() {
+     $hyperlinks = array('url' => '%O', 'file' => '%O', 'pdf' => '%O', 'doi' => 'http://dx.doi.org/%O', 'gsid' => 'http://scholar.google.com/scholar?cites=%O');
+     return $hyperlinks;
    }
 
    /**
