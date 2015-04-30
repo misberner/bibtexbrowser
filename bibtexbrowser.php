@@ -2303,10 +2303,10 @@ $('a.biburl').each(function() { // for each url "[bibtex]"
     ev.preventDefault(); // no open url
     if (biburl.nextAll('pre').length == 0) { // we don't have yet the bibtex data
       var bibtexEntryUrl = $(this).attr('href');
-      $.ajax({url: bibtexEntryUrl,  dataType: 'html', success: function (data) { // we download it
+      $.ajax({url: bibtexEntryUrl,  dataType: 'text', success: function (data) { // we download it
         // elem is the element containing bibtex entry, creating a new element is required for Chrome and IE
-        var elem = $('<pre class="purebibtex"/>');
-        elem.text($('.purebibtex', data).text()); // both text() are required for IE
+        var elem = $('<pre class="purebibtex"/>').text(data);
+        //elem.text($('.purebibtex', data).text()); // both text() are required for IE
         // we add a link so that users clearly see that even with AJAX
         // there is still one URL per paper (which is important for crawlers and metadata)
         elem.append(
