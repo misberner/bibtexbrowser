@@ -552,7 +552,7 @@ class StateBasedBibtexParser {
         $isinentry = false;$delegate->endEntry($entrysource);
         $entryvalue=''; // resetting the value buffer
         }
-        else if ($s==' ' || $s=="\t"  || $s=="\n" || $s=="\r" || $s=="#") {
+        else if ($s==' ' || $s=="\t"  || $s=="\n" || $s=="\r") {
           // blank characters are not taken into account when values are not in quotes or curly brackets
         }
         else { $entryvalue=$entryvalue.$s;}
