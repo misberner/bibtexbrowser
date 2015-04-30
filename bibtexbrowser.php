@@ -890,7 +890,7 @@ function latex2html($line) {
   $maths = array();
   $index = 0;
   // first we escape the math env
-  preg_match_all('/\$.*?\$/', $line, $matches);
+  preg_match_all('/\$.*?[^\\\\]\$/', $line, $matches);
   foreach ($matches[0] as $k) {
     $maths[] = $k;
     $line = str_replace($k, '__MATH'.$index.'__', $line);
@@ -967,6 +967,9 @@ function latex2html($line) {
   $line = str_replace('\\l','&#322',$line);
   $line = str_replace('\\L','&#321',$line);
   $line = str_replace('\\k{a}','&#261',$line);
+
+  $line = str_replace('\\_', '_', $line);
+  $line = str_replace('\\textunderscore', '_', $line);
 
 // clean out extra tex curly brackets, usually used for preserving capitals
   $line = str_replace('}','', $line);
@@ -1085,12 +1088,16 @@ class BibEntry {
     // so "comment" is not transformed too
     if ($name!='url' && $name!='comment') {
       $value = xtrim($value);
-      $value = latex2html($value);
+      $value = $this->latex2html($value);
     } else {
       //echo "xx".$value."xx\n";
     }
 
     $this->fields[$name] = $value;
+  }
+
+  function latex2html($latex) {
+    return latex2html($latex);
   }
 
   /** Sets a type of this bib entry. */
