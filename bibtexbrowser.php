@@ -970,6 +970,7 @@ function latex2html($line) {
 
   $line = str_replace('\\_', '_', $line);
   $line = str_replace('\\textunderscore', '_', $line);
+  $line = str_replace('\\ ', ' ', $line);
 
 // clean out extra tex curly brackets, usually used for preserving capitals
   $line = str_replace('}','', $line);
