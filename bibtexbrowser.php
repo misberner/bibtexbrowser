@@ -492,8 +492,13 @@ class StateBasedBibtexParser {
     else if ($state==GETTYPE) {
       // this is the beginning of a key
       if ($s=='{') {
-      $state = GETKEY;
       $delegate->setEntryType($entrytype);
+      if (strtolower($entrytype) == 'preamble') {
+        $state = GETVALUE;
+      }
+      else {
+        $state = GETKEY;
+      }
       $entrytype='';
       }
       else   $entrytype=$entrytype.$s;
@@ -542,7 +547,7 @@ class StateBasedBibtexParser {
         $isinentry = false;$delegate->endEntry($entrysource);
         $entryvalue=''; // resetting the value buffer
         }
-        else if ($s==' ' || $s=="\t"  || $s=="\n" || $s=="\r" ) {
+        else if ($s==' ' || $s=="\t"  || $s=="\n" || $s=="\r" || $s=="#") {
           // blank characters are not taken into account when values are not in quotes or curly brackets
         }
         else { $entryvalue=$entryvalue.$s;}
@@ -801,7 +806,8 @@ class BibDBBuilder {
     $this->currentEntry->timestamp();
 
     // we add a key if there is no key
-    if (!$this->currentEntry->hasField(Q_KEY) && $this->currentEntry->getType()!='string') {
+    $type = $this->currentEntry->getType();
+    if (!$this->currentEntry->hasField(Q_KEY) && $type != 'string' && $type != 'comment' && $type != 'preamble') {
       $this->currentEntry->setField(Q_KEY,md5($this->currentEntry->getTitle().implode('',$this->currentEntry->getRawAuthors())));
     }
 
@@ -815,12 +821,12 @@ class BibDBBuilder {
     }
 
     // ignoring jabref comments
-    if (($this->currentEntry->getType()=='comment')) {
+    if ($type == 'comment') {
       /* do nothing for jabref comments */
     }
 
     // we add it to the string database
-    else if ($this->currentEntry->getType()=='string') {
+    else if ($type=='string') {
       foreach($this->currentEntry->fields as $k => $v) {
         $k!=Q_INNER_TYPE and $this->stringdb[$k]=new StringEntry($k,$v,$this->filename);
       }
@@ -3214,12 +3220,17 @@ class BibDataBase {
     return in_array($filename, $this->from_files);
   }
 
+
   /** See update */
   function update_internal($resource_name, $resource) {
     $empty_array = array();
     $db = createBibDBBuilder();
     $db->build($resource_name, $resource);
 
+    $this->update_internal_from_builder($resource_name, $db);
+  }
+
+  function update_internal_from_builder($resource_name, $db) {
     $this->stringdb = array_merge($this->stringdb, $db->stringdb);
 
     $result = $db->builtdb;
