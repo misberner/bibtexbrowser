@@ -341,7 +341,10 @@ function _zetDB($bibtex_filenames) {
   $updated = false;
   // now we may update the database
   if (!file_exists($compiledbib)) {
-    @touch($compiledbib);
+    if (!is_dir(dirname($compiledbib))) {
+      @mkdir(dirname($compiledbib), 0700, true);
+    }
+    // @touch($compiledbib);
     $updated = true; // limit case
   } else foreach(explode(MULTIPLE_BIB_SEPARATOR, $bibtex_filenames) as $bib) {
       // is it up to date ? wrt to the bib file and the script
@@ -359,18 +362,20 @@ function _zetDB($bibtex_filenames) {
   $saved = false;
   // are we able to save the compiled version ?
   // note that the compiled version is saved in the current working directory
-  if ( ($parse || $updated ) && is_writable($compiledbib)) {
+  if ( ($parse || $updated ) && is_writable(dirname($compiledbib))) {
     // we use 'a' because the file is not locked between fopen and flock
-    $f = fopen($compiledbib,'a');
-    //we use a lock to avoid that a call to bibbtexbrowser made while we write the object loads an incorrect object
-    if (flock($f,LOCK_EX)) {
-//       echo '<!-- saving -->';
-      ftruncate($f,0);
-      fwrite($f,serialize($db));
-      flock($f,LOCK_UN);
-      $saved = true;
-    } else { die('could not get the lock'); }
-    fclose($f);
+    $tmpName = tempnam(sys_get_temp_dir(), 'compiledbib');
+    $f = fopen($tmpName, 'w');
+    if ($f) {
+      fwrite($f, serialize($db));
+      fclose($f);
+      if (rename($tmpName, $compiledbib)) {
+        $saved = true;
+      }
+      else {
+        unlink($tmpName); // couldn't save
+      }
+    }
   } // end saving the cached verions
   //else echo '<!-- please chmod the directory containing the bibtex file to be able to keep a compiled version (much faster requests for large bibtex files) -->';
 
