@@ -60,6 +60,7 @@ The following uses bibtexbrowser under the hood:
 * Generating publication lists in Latex using [[http://www.monperrus.net/martin/bibtex2latex]] 
 * [[http://www.monperrus.net/martin/feeding-mysql-database-with-bibtexbrowser|Feeding a MySQL database from the content of a bibtex file]]
 * Publication lists in Wordpress with [[http://www.monperrus.net/martin/wp-publications|wp-publications]]
+* [[http://www.monperrus.net/martin/publication-lists-with-hal-and-bibtexbrowser|Publication lists with HAL and bibtexbrowser]]
 
 =====Demo and screenshot=====
 
@@ -235,7 +236,7 @@ The default academic mode creates four sections:
 - workshop papers (for entries containing "workshop" in the field booktitle)
 - others
 
-You may create your own one in ''bibtexbrowser.local.php'' (see also "By creating a bibtexbrowser.local.php" below):
+You may create your own one in ''bibtexbrowser.local.php'' (see also "creating a bibtexbrowser.local.php" below):
 <pre>
 define('BIBLIOGRAPHYSECTIONS','my_sectioning');
 function my_sectioning() {
@@ -265,7 +266,6 @@ return
 }
 </pre>
 
-
 ====How to get the  individual bib pages embedded as well?====
 ''define('BIBTEXBROWSER_URL',""); ''
 
@@ -287,7 +287,7 @@ This comment field can also be used to add acceptance rates and impact factors.
 ====How to localize bibtexbrowser?====
 Add in ''bibtexbrowser.local.php'':
 <pre>
-&lt;?
+&lt;?php
 global $BIBTEXBROWSER_LANG;
 $BIBTEXBROWSER_LANG=array();
 $BIBTEXBROWSER_LANG['Refereed Conference Papers']="Conférences avec comité de lecture";
@@ -299,15 +299,24 @@ $BIBTEXBROWSER_LANG['Year']="Année";
 ====How to change the default frame?====
 Add in ''bibtexbrowser.local.php'':
 <pre>
-&lt;?
+&lt;?php
 // or any valid query: year=2010, author=Jane, etc.
 @define('BIBTEXBROWSER_DEFAULT_FRAME','all');
 ?>
 </pre>
 
-====How to order a list of Bibtex entries?====
+====How to configure the order of Bibtex entries?====
+You can set the default order function in ''bibtexbrowser.local.php'':
 <pre>
-&lt;?
+&lt;?php
+// can be @define('ORDER_FUNCTION','compare_bib_entry_by_title');
+define('ORDER_FUNCTION','compare_bib_entry_by_bibtex_order');
+?>
+</pre>
+
+Or programmatically:
+<pre>
+&lt;?php
 $_GET['library']=1;
 require_once('bibtexbrowser.php');
 $db = new BibDataBase();
@@ -321,7 +330,86 @@ foreach ($entries as $bibentry) {
 ?>
 </pre>
 
+====How to use the change the title of the result page?====
 
+You may create your own title function in ''bibtexbrowser.local.php'' (see "creating a bibtexbrowser.local.php" below):
+<pre>
+define('BIBLIOGRAPHYTITLE','my_title_function');
+function my_title_function($query) {
+  return "Publications of the Nuclear Research Group";
+}
+</pre>
+See function DefaultBibliographyTitle for inspiration.
+
+====How to disallow crawler indexing?====
+
+Add in ''bibtexbrowser.local.php'' (see "creating a bibtexbrowser.local.php" below):
+<pre>
+define('BIBTEXBROWSER_ROBOTS_NOINDEX', true);
+</pre>
+
+====How to load Bibtex from a dynamic string?====
+
+You can use the special ''php://memory'' feature in a new dispatcher.
+Add in ''bibtexbrowser.local.php'':
+<pre>
+define("BIBTEXBROWSER_MAIN", 'DynamicDispatcher');
+</pre>
+
+and then in ''bibtexbrowser.after.php'':
+<pre>
+&lt;?php
+class DynamicDispatcher extends Dispatcher {
+  function getDB() {
+    $data = fopen('php://memory','x+');
+    $dynamic_string = "@book{aKey,title={A Book},author={Jan Doe},publisher={Springer},year=2009}\n";
+    fwrite($data, $dynamic_string);
+    fseek($data,0);
+    $db = new BibDataBase();
+    $db->update_internal("inline", $data);
+    return $db;
+  }
+}
+?>
+</pre>
+
+====How to load bibliographic data in other formats?====
+
+If your bibliographic data comes from XML or a database, you can still browse it with bibtexbrowser as follows:
+Add in ''bibtexbrowser.local.php'':
+<pre>
+define("BIBTEXBROWSER_MAIN", 'PgmDispatcher');
+</pre>
+
+and then in ''bibtexbrowser.after.php'':
+<pre>
+&lt;?php
+class PgmDispatcher extends Dispatcher {
+  function getDB() {
+    $db = new BibDataBase();
+    
+    // builds the first entry
+    $entry = new BibEntry();
+    $entry->setType("article");
+    $entry->setField("title", "foo");
+    $entry->setField("year", "2014");
+    $entry->setKey("kolp");
+    $db->addEntry($entry);
+    
+    // builds the second entry
+    $entry2 = new BibEntry();
+    $entry2->setType("article");
+    $entry2->setField("title", "bar");
+    $entry2->setField("year", "2013");
+    $entry2->setKey("tili");
+    $db->addEntry($entry2);
+    
+    return $db;
+  }
+}
+?>
+</pre>
+    
 =====Related tools=====
 
 Old-fashioned:
